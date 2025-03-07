@@ -88,7 +88,7 @@ export default function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Add styles to the document head only on client side
+ 
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const styleEl = document.createElement('style');
