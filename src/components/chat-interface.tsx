@@ -1,13 +1,66 @@
-// app/components/chat-interface.tsx (enhanced version)
 'use client'
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, getWeatherByLocation, WeatherInfo } from '@/actions/weather';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Send, Cloud, CloudRain, Sun, Wind, ThermometerSun, Droplets, CloudLightning, CloudSnow, CloudFog, RefreshCw } from 'lucide-react';
-import {toast} from 'sonner'
+import { toast } from 'sonner';
+
+// Add these styles to your globals.css file
+const scrollStyles = `
+/* Custom scrollbar styles for chat interface */
+.chat-scrollbar {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent; /* For Firefox */
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.5);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.7);
+}
+
+/* Dark mode scrollbar adjustments */
+.dark .chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(200, 200, 200, 0.3);
+}
+
+.dark .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 200, 200, 0.5);
+}
+
+/* For the message animations */
+@keyframes message-appear {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+.message-animation {
+  animation: message-appear 0.3s ease-out forwards;
+}
+`;
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -29,23 +82,32 @@ export default function ChatInterface() {
       },
     ];
   });
-  
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [lastWeatherInfo, setLastWeatherInfo] = useState<WeatherInfo | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Add styles to the document head only on client side
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleEl = document.createElement('style');
+      styleEl.textContent = scrollStyles;
+      document.head.appendChild(styleEl);
+      return () => {
+        document.head.removeChild(styleEl);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-    // Save chat history to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('weatherChatHistory', JSON.stringify(messages));
     }
   }, [messages]);
-
+  
   useEffect(() => {
-    // Focus the input field when the component mounts
     inputRef.current?.focus();
   }, []);
 
@@ -112,11 +174,9 @@ Wind speed: ${info.windSpeed} km/h`;
         role: 'assistant',
         content: 'Sorry, something went wrong. Please try again later.',
       };
-      
       setMessages((prev) => [...prev, errorMessage]);
       toast(
         "Failed to fetch weather data. Please check your connection and try again.",
-        
       );
     } finally {
       setLoading(false);
@@ -144,7 +204,7 @@ Wind speed: ${info.windSpeed} km/h`;
       return <Cloud className="h-6 w-6 text-gray-400" />;
     }
   };
-
+  
   const formatMessage = (content: string) => {
     if (content.includes('Temperature:')) {
       const lines = content.split('\n');
@@ -153,7 +213,6 @@ Wind speed: ${info.windSpeed} km/h`;
           <div className="font-semibold">{lines[0]}</div>
           {lines.slice(1).map((line, index) => {
             if (line.trim() === '') return null;
-            
             let icon;
             if (line.includes('Temperature:')) {
               icon = <ThermometerSun className="h-4 w-4 text-red-500" />;
@@ -169,7 +228,6 @@ Wind speed: ${info.windSpeed} km/h`;
             } else if (line.includes('Wind speed:')) {
               icon = <Wind className="h-4 w-4 text-blue-300" />;
             }
-            
             return (
               <div key={index} className="flex items-center gap-2">
                 {icon}
@@ -180,34 +238,11 @@ Wind speed: ${info.windSpeed} km/h`;
         </div>
       );
     }
-    
     return content;
   };
 
-  const getBackgroundClass = () => {
-    if (!lastWeatherInfo) return "";
-    
-    const desc = lastWeatherInfo.description.toLowerCase();
-    
-    if (desc.includes('rain') || desc.includes('drizzle')) {
-      return "bg-gradient-to-br from-blue-900 to-gray-900";
-    } else if (desc.includes('snow')) {
-      return "bg-gradient-to-br from-blue-100 to-blue-200";
-    } else if (desc.includes('clear') || desc.includes('sun')) {
-      return "bg-gradient-to-br from-blue-400 to-yellow-300";
-    } else if (desc.includes('cloud')) {
-      return "bg-gradient-to-br from-gray-300 to-blue-200";
-    } else if (desc.includes('fog')) {
-      return "bg-gradient-to-br from-gray-400 to-gray-300";
-    } else if (desc.includes('thunderstorm')) {
-      return "bg-gradient-to-br from-gray-900 to-purple-900";
-    }
-    
-    return "";
-  };
-
   return (
-    <div className={`flex flex-col h-[calc(100vh-2rem)] max-w-2xl mx-auto p-4 transition-colors duration-500 ${getBackgroundClass()}`}>
+    <div className={`flex flex-col h-[calc(100vh-2rem)] max-w-2xl mx-auto p-4 transition-colors duration-500`}>
       <Card className="flex flex-col h-full bg-opacity-90 backdrop-blur-sm">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -227,13 +262,14 @@ Wind speed: ${info.windSpeed} km/h`;
           </div>
           <CardDescription>Ask about the weather in any location</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto mb-4 space-y-4">
-          {messages.map((message) => (
+        <CardContent className="flex-1 overflow-y-auto mb-4 space-y-4 chat-scrollbar">
+          {messages.map((message, index) => (
             <div
               key={message.id}
-              className={`flex ${
+              className={`flex message-animation ${
                 message.role === 'user' ? 'justify-end' : 'justify-start'
               }`}
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${

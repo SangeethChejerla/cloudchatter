@@ -1,4 +1,3 @@
-
 export interface WeatherResponse {
     latitude: number;
     longitude: number;
@@ -20,7 +19,6 @@ export interface WeatherResponse {
       wind_speed_10m: number;
     };
   }
-  
   export interface GeocodingResponse {
     results?: {
       id: number;
@@ -83,7 +81,6 @@ export interface WeatherResponse {
       71: 'Slight snow fall',
       80: 'Slight rain showers',
       95: 'Thunderstorm',
-      // Add more codes as needed
     };
     
     return weatherCodes[code] || 'Unknown';
